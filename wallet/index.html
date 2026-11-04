@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}</style>
+</head>
+<body>
+<title>Wallet UI</title>
+<style>
+  /* Layout: single phone frame centered on a soft backdrop (full-screen on phones); header, balance, actions, token list, bottom nav. */
+  :root {
+    --backdrop: #e8edf5;
+    --phone-bg: #0b1016;
+    --surface: #141b24;
+    --line: #26303d;
+    --fg: #f5f8fc;
+    --muted: #8a97a8;
+    --hint: #5a6676;
+    --accent: #3b7bff;
+    --accent-soft: rgba(59,123,255,0.14);
+    --green: #2ebd85;
+    --green-soft: rgba(46,189,133,0.12);
+    --red: #f6465d;
+    --red-soft: rgba(246,70,93,0.12);
+    --amber: #f0b90b;
+    --chip: #202a37;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --backdrop: #05080c; --hint: #8a97a8; }
+  }
+  :root[data-theme="dark"] { --backdrop: #05080c; --hint: #8a97a8; }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--backdrop);
+    color: var(--fg);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100%;
+    padding-block: 24px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 390px;
+    background: var(--phone-bg);
+    border-radius: 34px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(8,16,30,0.45);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 780px;
+  }
+
+  .status { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px 4px; font-size: 13px; font-weight: 600; }
+  .status .icons { display: flex; gap: 6px; align-items: center; }
+  .status svg { display: block; }
+
+  .appbar { display: flex; align-items: center; justify-content: space-between; padding: 10px 18px 6px; }
+  .wallet-pill { display: flex; align-items: center; gap: 8px; background: var(--chip); padding: 7px 12px; border-radius: 999px; font-weight: 600; font-size: 14px; border: none; color: var(--fg); cursor: pointer; white-space: nowrap; }
+  .wallet-pill .dot { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg,#3b7bff,#8a63ff); flex: none; }
+  .wallet-pill .chev { color: var(--muted); }
+  .appbar .right { display: flex; gap: 14px; }
+  .iconbtn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; display: grid; place-items: center; }
+  .iconbtn:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+
+  .balance { text-align: center; padding: 22px 20px 6px; }
+  .balance .amount { font-size: 42px; font-weight: 700; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .change { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 14px; padding: 4px 10px; border-radius: 999px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .change.up { color: var(--green); background: var(--green-soft); }
+  .change.down { color: var(--red); background: var(--red-soft); }
+  .change.down svg { transform: rotate(180deg); }
+
+  .feed { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .feed .led { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); flex: none; }
+  .feed.live .led { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+  .feed button { background: none; border: none; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; padding: 2px 4px; }
+
+  .actions { display: flex; justify-content: space-between; gap: 8px; padding: 20px 26px 6px; }
+  .action { display: flex; flex-direction: column; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; flex: 1; min-width: 0; }
+  .action .circle { width: 52px; height: 52px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; color: var(--accent); }
+  .action span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+
+  .tabs { display: flex; gap: 22px; padding: 18px 22px 0; border-bottom: 1px solid var(--line); margin-top: 10px; }
+  .tab { background: none; border: none; color: var(--muted); font-weight: 600; font-size: 15px; padding-bottom: 12px; cursor: pointer; position: relative; }
+  .tab.active { color: var(--fg); }
+  .tab.active::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2.5px; border-radius: 2px; background: var(--accent); }
+
+  .tokens { flex: 1; overflow-y: auto; padding: 6px 0 90px; }
+  .token { display: flex; align-items: center; gap: 13px; padding: 12px 20px; }
+  .coin { width: 40px; height: 40px; flex: none; position: relative; }
+  .coin img { width: 40px; height: 40px; display: block; border-radius: 50%; }
+  .coin .net { position: absolute; bottom: -2px; right: -3px; width: 17px; height: 17px; border-radius: 50%; border: 2px solid var(--phone-bg); background: var(--phone-bg); }
+  .coin .net img { width: 13px; height: 13px; }
+  .token .info { flex: 1; min-width: 0; }
+  .token .name { font-weight: 600; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .token .name small { color: var(--muted); font-weight: 600; font-size: 11px; background: var(--chip); padding: 2px 6px; border-radius: 5px; margin-left: 6px; vertical-align: 2px; }
+  .token .sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+  .token .vals { text-align: right; flex: none; }
+  .token .fiat { font-weight: 600; font-size: 15.5px; font-variant-numeric: tabular-nums; }
+  .token .qty { font-size: 12.5px; color: var(--muted); margin-top: 3px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .flash-up .fiat { animation: fu 1s ease; }
+  .flash-down .fiat { animation: fd 1s ease; }
+  @keyframes fu { 0% { color: var(--green); } 100% { color: var(--fg); } }
+  @keyframes fd { 0% { color: var(--red); } 100% { color: var(--fg); } }
+
+  .nav { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; background: rgba(13,19,27,0.94); backdrop-filter: blur(12px); border-top: 1px solid var(--line); padding: 10px 8px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .navbtn { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; }
+  .navbtn.active { color: var(--accent); }
+
+  .hint { max-width: 390px; width: 100%; text-align: center; color: var(--hint); font-size: 12px; margin-top: 16px; line-height: 1.5; }
+
+  @media (max-width: 480px) {
+    body { padding: 0; background: var(--phone-bg); }
+    .phone { max-width: none; border-radius: 0; box-shadow: none; min-height: 100%; overflow: visible; }
+    .tokens { overflow: visible; padding-bottom: 96px; }
+    .nav { position: fixed; }
+    .actions { padding-left: 18px; padding-right: 18px; }
+    .hint { padding: 0 20px 110px; margin-top: 0; color: var(--muted); }
+  }
+  @media (prefers-reduced-motion: reduce) { .flash-up .fiat, .flash-down .fiat { animation: none; } }
+</style>
+
+<div class="phone" aria-label="Демо-кошелёк">
+  <div class="status">
+    <span id="clock">9:41</span>
+    <span class="icons">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4" width="3" height="8" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1" y="1" width="19" height="10" rx="2.5"/><rect x="2.5" y="2.5" width="13" height="7" rx="1" fill="currentColor"/><rect x="21.5" y="4" width="1.5" height="4" rx="0.75" fill="currentColor" stroke="none"/></svg>
+    </span>
+  </div>
+
+  <div class="appbar">
+    <button class="wallet-pill" type="button">
+      <span class="dot"></span>
+      Main Wallet
+      <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="right">
+      <button class="iconbtn" type="button" aria-label="Сканировать">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h2M4 17v2a1 1 0 0 0 1 1h2M20 7V5a1 1 0 0 0-1-1h-2M20 17v2a1 1 0 0 1-1 1h-2M3 12h18"/></svg>
+      </button>
+      <button class="iconbtn" type="button" aria-label="Настройки">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="balance">
+    <div class="amount" id="total">$0.00</div>
+    <div class="change up" id="change">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 15l-6-6-6 6"/></svg>
+      <span id="changeText">+$0.00 (0.00%)</span>
+    </div>
+    <div class="feed" id="feed" aria-live="polite">
+      <span class="led"></span>
+      <span id="feedText">Загружаю цены…</span>
+      <button type="button" id="refresh">Обновить</button>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="action" type="button"><span class="circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span><span>Отправить</span></button>
+    <button class="action" type="button"><span class="circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg></span><span>Получить</span></button>
+    <button class="action" type="button"><span class="circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg></span><span>Купить</span></button>
+    <button class="action" type="button"><span class="circle"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13"/></svg></span><span>Обмен</span></button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" type="button">Токены</button>
+    <button class="tab" type="button">NFT</button>
+    <button class="tab" type="button">Активность</button>
+  </div>
+
+  <div class="tokens" id="tokens"></div>
+
+  <nav class="nav">
+    <button class="navbtn active" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Кошелёк</button>
+    <button class="navbtn" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13"/></svg>Обмен</button>
+    <button class="navbtn" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 10h18M7 15h4"/></svg>Карта</button>
+    <button class="navbtn" type="button"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Поиск</button>
+  </nav>
+</div>
+
+<p class="hint">Демонстрационный интерфейс кошелька. Количество монет вымышленное, к блокчейну ничего не подключено. Цены берутся с CoinGecko.</p>
+
+<script>
+  // Real logos, embedded so the page works without loading images from other sites.
+  const ICONS = {"btc": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iI0Y3OTMxQSIvPjxwYXRoIGZpbGw9IiNGRkYiIGZpbGwtcnVsZT0ibm9uemVybyIgZD0iTTIzLjE4OSAxNC4wMmMuMzE0LTIuMDk2LTEuMjgzLTMuMjIzLTMuNDY1LTMuOTc1bC43MDgtMi44NC0xLjcyOC0uNDMtLjY5IDIuNzY1Yy0uNDU0LS4xMTQtLjkyLS4yMi0xLjM4NS0uMzI2bC42OTUtMi43ODNMMTUuNTk2IDZsLS43MDggMi44MzljLS4zNzYtLjA4Ni0uNzQ2LS4xNy0xLjEwNC0uMjZsLjAwMi0uMDA5LTIuMzg0LS41OTUtLjQ2IDEuODQ2czEuMjgzLjI5NCAxLjI1Ni4zMTJjLjcuMTc1LjgyNi42MzguODA1IDEuMDA2bC0uODA2IDMuMjM1Yy4wNDguMDEyLjExLjAzLjE4LjA1N2wtLjE4My0uMDQ1LTEuMTMgNC41MzJjLS4wODYuMjEyLS4zMDMuNTMxLS43OTMuNDEuMDE4LjAyNS0xLjI1Ni0uMzEzLTEuMjU2LS4zMTNsLS44NTggMS45NzggMi4yNS41NjFjLjQxOC4xMDUuODI4LjIxNSAxLjIzMS4zMThsLS43MTUgMi44NzIgMS43MjcuNDMuNzA4LTIuODRjLjQ3Mi4xMjcuOTMuMjQ1IDEuMzc4LjM1N2wtLjcwNiAyLjgyOCAxLjcyOC40My43MTUtMi44NjZjMi45NDguNTU4IDUuMTY0LjMzMyA2LjA5Ny0yLjMzMy43NTItMi4xNDYtLjAzNy0zLjM4NS0xLjU4OC00LjE5MiAxLjEzLS4yNiAxLjk4LTEuMDAzIDIuMjA3LTIuNTM4em0tMy45NSA1LjUzOGMtLjUzMyAyLjE0Ny00LjE0OC45ODYtNS4zMi42OTVsLjk1LTMuODA1YzEuMTcyLjI5MyA0LjkyOS44NzIgNC4zNyAzLjExem0uNTM1LTUuNTY5Yy0uNDg3IDEuOTUzLTMuNDk1Ljk2LTQuNDcuNzE3bC44Ni0zLjQ1Yy45NzUuMjQzIDQuMTE4LjY5NiAzLjYxIDIuNzMzeiIvPjwvZz48L3N2Zz4=", "eth": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzYyN0VFQSIvPjxnIGZpbGw9IiNGRkYiIGZpbGwtcnVsZT0ibm9uemVybyI+PHBhdGggZmlsbC1vcGFjaXR5PSIuNjAyIiBkPSJNMTYuNDk4IDR2OC44N2w3LjQ5NyAzLjM1eiIvPjxwYXRoIGQ9Ik0xNi40OTggNEw5IDE2LjIybDcuNDk4LTMuMzV6Ii8+PHBhdGggZmlsbC1vcGFjaXR5PSIuNjAyIiBkPSJNMTYuNDk4IDIxLjk2OHY2LjAyN0wyNCAxNy42MTZ6Ii8+PHBhdGggZD0iTTE2LjQ5OCAyNy45OTV2LTYuMDI4TDkgMTcuNjE2eiIvPjxwYXRoIGZpbGwtb3BhY2l0eT0iLjIiIGQ9Ik0xNi40OTggMjAuNTczbDcuNDk3LTQuMzUzLTcuNDk3LTMuMzQ4eiIvPjxwYXRoIGZpbGwtb3BhY2l0eT0iLjYwMiIgZD0iTTkgMTYuMjJsNy40OTggNC4zNTN2LTcuNzAxeiIvPjwvZz48L2c+PC9zdmc+", "bnb": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSI+PGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiNGM0JBMkYiLz48cGF0aCBmaWxsPSIjRkZGIiBkPSJNMTIuMTE2IDE0LjQwNEwxNiAxMC41MmwzLjg4NiAzLjg4NiAyLjI2LTIuMjZMMTYgNmwtNi4xNDQgNi4xNDQgMi4yNiAyLjI2ek02IDE2bDIuMjYtMi4yNkwxMC41MiAxNmwtMi4yNiAyLjI2TDYgMTZ6bTYuMTE2IDEuNTk2TDE2IDIxLjQ4bDMuODg2LTMuODg2IDIuMjYgMi4yNTlMMTYgMjZsLTYuMTQ0LTYuMTQ0LS4wMDMtLjAwMyAyLjI2My0yLjI1N3pNMjEuNDggMTZsMi4yNi0yLjI2TDI2IDE2bC0yLjI2IDIuMjZMMjEuNDggMTZ6bS0zLjE4OC0uMDAyaC4wMDJWMTZMMTYgMTguMjk0bC0yLjI5MS0yLjI5LS4wMDQtLjAwNC4wMDQtLjAwMy40MDEtLjQwMi4xOTUtLjE5NUwxNiAxMy43MDZsMi4yOTMgMi4yOTN6Ii8+PC9nPjwvc3ZnPg==", "usdt": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzI2QTE3QiIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xNy45MjIgMTcuMzgzdi0uMDAyYy0uMTEuMDA4LS42NzcuMDQyLTEuOTQyLjA0Mi0xLjAxIDAtMS43MjEtLjAzLTEuOTcxLS4wNDJ2LjAwM2MtMy44ODgtLjE3MS02Ljc5LS44NDgtNi43OS0xLjY1OCAwLS44MDkgMi45MDItMS40ODYgNi43OS0xLjY2djIuNjQ0Yy4yNTQuMDE4Ljk4Mi4wNjEgMS45ODguMDYxIDEuMjA3IDAgMS44MTItLjA1IDEuOTI1LS4wNnYtMi42NDNjMy44OC4xNzMgNi43NzUuODUgNi43NzUgMS42NTggMCAuODEtMi44OTUgMS40ODUtNi43NzUgMS42NTdtMC0zLjU5di0yLjM2Nmg1LjQxNFY3LjgxOUg4LjU5NXYzLjYwOGg1LjQxNHYyLjM2NWMtNC40LjIwMi03LjcwOSAxLjA3NC03LjcwOSAyLjExOCAwIDEuMDQ0IDMuMzA5IDEuOTE1IDcuNzA5IDIuMTE4djcuNTgyaDMuOTEzdi03LjU4NGM0LjM5My0uMjAyIDcuNjk0LTEuMDczIDcuNjk0LTIuMTE2IDAtMS4wNDMtMy4zMDEtMS45MTQtNy42OTQtMi4xMTciLz48L2c+PC9zdmc+", "sol": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIj48Y2lyY2xlIGZpbGw9IiM2NkY5QTEiIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIvPjxwYXRoIGQ9Ik05LjkyNSAxOS42ODdhLjU5LjU5IDAgMDEuNDE1LS4xN2gxNC4zNjZhLjI5LjI5IDAgMDEuMjA3LjQ5N2wtMi44MzggMi44MTVhLjU5LjU5IDAgMDEtLjQxNS4xNzFINy4yOTRhLjI5MS4yOTEgMCAwMS0uMjA3LS40OThsMi44MzgtMi44MTV6bTAtMTAuNTE3QS41OS41OSAwIDAxMTAuMzQgOWgxNC4zNjZjLjI2MSAwIC4zOTIuMzE0LjIwNy40OThsLTIuODM4IDIuODE1YS41OS41OSAwIDAxLS40MTUuMTdINy4yOTRhLjI5MS4yOTEgMCAwMS0uMjA3LS40OTdMOS45MjUgOS4xN3ptMTIuMTUgNS4yMjVhLjU5LjU5IDAgMDAtLjQxNS0uMTdINy4yOTRhLjI5MS4yOTEgMCAwMC0uMjA3LjQ5OGwyLjgzOCAyLjgxNWMuMTEuMTA5LjI2LjE3LjQxNS4xN2gxNC4zNjZhLjI5MS4yOTEgMCAwMC4yMDctLjQ5OGwtMi44MzgtMi44MTV6IiBmaWxsPSIjRkZGIi8+PC9nPjwvc3ZnPg==", "xrp": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iIzIzMjkyRiIvPjxwYXRoIGQ9Ik0yMy4wNyA4aDIuODlsLTYuMDE1IDUuOTU3YTUuNjIxIDUuNjIxIDAgMDEtNy44OSAwTDYuMDM1IDhIOC45M2w0LjU3IDQuNTIzYTMuNTU2IDMuNTU2IDAgMDA0Ljk5NiAwTDIzLjA3IDh6TTguODk1IDI0LjU2M0g2bDYuMDU1LTUuOTkzYTUuNjIxIDUuNjIxIDAgMDE3Ljg5IDBMMjYgMjQuNTYyaC0yLjg5NUwxOC41IDIwYTMuNTU2IDMuNTU2IDAgMDAtNC45OTYgMGwtNC42MSA0LjU2M3oiIGZpbGw9IiNGRkYiLz48L2c+PC9zdmc+", "trx": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIj48Y2lyY2xlIGZpbGw9IiNFRjAwMjciIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIvPjxwYXRoIGQ9Ik0yMS45MzIgOS45MTNMNy41IDcuMjU3bDcuNTk1IDE5LjExMiAxMC41ODMtMTIuODk0LTMuNzQ2LTMuNTYyem0tLjIzMiAxLjE3bDIuMjA4IDIuMDk5LTYuMDM4IDEuMDkzIDMuODMtMy4xOTJ6bS01LjE0MiAyLjk3M2wtNi4zNjQtNS4yNzggMTAuNDAyIDEuOTE0LTQuMDM4IDMuMzY0em0tLjQ1My45MzRsLTEuMDM4IDguNThMOS40NzIgOS40ODdsNi42MzMgNS41MDJ6bS45Ni40NTVsNi42ODctMS4yMS03LjY3IDkuMzQzLjk4My04LjEzM3oiIGZpbGw9IiNGRkYiLz48L2c+PC9zdmc+", "doge": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxNiIgZmlsbD0iI0MzQTYzNCIvPjxwYXRoIGZpbGw9IiNGRkYiIGQ9Ik0xMy4yNDggMTQuNjFoNC4zMTR2Mi4yODZoLTQuMzE0djQuODE4aDIuNzIxYzEuMDc3IDAgMS45NTgtLjE0NSAyLjY0NC0uNDM3LjY4Ni0uMjkxIDEuMjI0LS42OTQgMS42MTUtMS4yMWE0LjQgNC40IDAgMDAuNzk2LTEuODE1IDExLjQgMTEuNCAwIDAwLjIxLTIuMjUyIDExLjQgMTEuNCAwIDAwLS4yMS0yLjI1MiA0LjM5NiA0LjM5NiAwIDAwLS43OTYtMS44MTVjLS4zOTEtLjUxNi0uOTMtLjkxOS0xLjYxNS0xLjIxLS42ODYtLjI5Mi0xLjU2Ny0uNDM3LTIuNjQ0LS40MzdoLTIuNzIxdjQuMzI1em0tMi43NjYgMi4yODZIOXYtMi4yODVoMS40ODJWOGg2LjU0OWMxLjIxIDAgMi4yNTcuMjEgMy4xNDIuNjI3Ljg4NS40MTkgMS42MDcuOTkgMi4xNjggMS43MTUuNTYuNzI0Ljk3NyAxLjU3MiAxLjI1IDIuNTQzLjI3My45NzEuNDA5IDIuMDEuNDA5IDMuMTE1YTExLjQ3IDExLjQ3IDAgMDEtLjQxIDMuMTE1Yy0uMjcyLjk3LS42ODkgMS44MTktMS4yNSAyLjU0My0uNTYuNzI1LTEuMjgyIDEuMjk2LTIuMTY3IDEuNzE1LS44ODUuNDE4LTEuOTMzLjYyNy0zLjE0Mi42MjdoLTYuNTQ5di03LjEwNHoiLz48L2c+PC9zdmc+"};
+
+  // Holdings are made up; prices come from CoinGecko when it is reachable.
+  // "price" / "chg" below are rough fallback values, shown only when the API is unreachable.
+  const tokens = [
+    { id: "bitcoin",     sym: "BTC",  name: "Bitcoin",  icon: "btc",  qty: 0.0642, price: 96800, chg: 1.2 },
+    { id: "ethereum",    sym: "ETH",  name: "Ethereum", icon: "eth",  qty: 1.284,  price: 3400,  chg: 0.8 },
+    { id: "binancecoin", sym: "BNB",  name: "BNB Smart Chain", icon: "bnb", qty: 4.5, price: 610, chg: -0.4 },
+    { id: "tether",      sym: "USDT", name: "Tether",   icon: "usdt", net: "eth", tag: "ERC20", qty: 1850, price: 1.00, chg: 0.0 },
+    { id: "solana",      sym: "SOL",  name: "Solana",   icon: "sol",  qty: 12.7,   price: 185,   chg: 2.1 },
+    { id: "ripple",      sym: "XRP",  name: "XRP",      icon: "xrp",  qty: 640,    price: 2.2,   chg: -1.1 },
+    { id: "tron",        sym: "TRX",  name: "TRON",     icon: "trx",  qty: 2400,   price: 0.25,  chg: 0.3 },
+    { id: "dogecoin",    sym: "DOGE", name: "Dogecoin", icon: "doge", qty: 3100,   price: 0.17,  chg: -2.0 },
+  ];
+
+  const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  const priceFmt = (p) => p >= 1
+    ? usd.format(p)
+    : "$" + p.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+  const qf = (n) => n.toLocaleString("en-US", { maximumFractionDigits: 4 });
+  const pct = (c) => (c > 0 ? "+" : "") + c.toFixed(2) + "%";
+  const cls = (c) => c > 0 ? "up" : c < 0 ? "down" : "";
+
+  const list = document.getElementById("tokens");
+
+  function render(prev) {
+    let total = 0, totalPrev = 0;
+    list.innerHTML = tokens.map(t => {
+      const value = t.qty * t.price;
+      total += value;
+      totalPrev += value / (1 + t.chg / 100);
+      let flash = "";
+      if (prev && prev[t.id] != null && prev[t.id] !== t.price) flash = t.price > prev[t.id] ? "flash-up" : "flash-down";
+      const net = t.net ? `<span class="net"><img src="${ICONS[t.net]}" alt=""></span>` : "";
+      const tag = t.tag ? `<small>${t.tag}</small>` : "";
+      return `
+        <div class="token ${flash}">
+          <div class="coin"><img src="${ICONS[t.icon]}" alt="${t.sym}">${net}</div>
+          <div class="info">
+            <div class="name">${t.name}${tag}</div>
+            <div class="sub">${priceFmt(t.price)} <span class="${cls(t.chg)}">${pct(t.chg)}</span></div>
+          </div>
+          <div class="vals">
+            <div class="fiat">${usd.format(value)}</div>
+            <div class="qty">${qf(t.qty)} ${t.sym}</div>
+          </div>
+        </div>`;
+    }).join("");
+
+    const diff = total - totalPrev;
+    const diffPct = totalPrev ? diff / totalPrev * 100 : 0;
+    document.getElementById("total").textContent = usd.format(total);
+    const ch = document.getElementById("change");
+    ch.className = "change " + (diff < 0 ? "down" : "up");
+    document.getElementById("changeText").textContent =
+      (diff < 0 ? "−" : "+") + usd.format(Math.abs(diff)) + " (" + Math.abs(diffPct).toFixed(2) + "%)";
+  }
+
+  const feed = document.getElementById("feed");
+  const feedText = document.getElementById("feedText");
+  const API = "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&include_24hr_change=true&ids="
+    + tokens.map(t => t.id).join(",");
+
+  let loading = false;
+  async function loadPrices() {
+    if (loading) return;
+    loading = true;
+    const prev = Object.fromEntries(tokens.map(t => [t.id, t.price]));
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(API, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      let got = 0;
+      for (const t of tokens) {
+        const d = data[t.id];
+        if (d && typeof d.usd === "number") {
+          t.price = d.usd;
+          if (typeof d.usd_24h_change === "number") t.chg = d.usd_24h_change;
+          got++;
+        }
+      }
+      if (!got) throw new Error("empty");
+      render(prev);
+      const now = new Date();
+      feed.classList.add("live");
+      feedText.textContent = "Живые цены CoinGecko · " + now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");
+    } catch (e) {
+      feed.classList.remove("live");
+      feedText.textContent = "Нет связи с CoinGecko · примерные цены";
+    } finally {
+      loading = false;
+    }
+  }
+
+  render();
+  loadPrices();
+  setInterval(loadPrices, 60000);
+  document.getElementById("refresh").addEventListener("click", loadPrices);
+
+  function tick() {
+    const d = new Date();
+    document.getElementById("clock").textContent = d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  tick();
+  setInterval(tick, 10000);
+</script>
+
+</body>
+</html>
