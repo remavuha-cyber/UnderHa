@@ -158,6 +158,7 @@ def scan(queries, per_query, days_back, min_views, max_subs, api_key,
     # Для Shorts сужаем поиск до коротких видео (<4 мин) — экономит обработку.
     search_duration = "short" if shorts_only else "any"
     rows = []
+    seen_videos = set()  # один ролик может найтись по нескольким запросам — не дублируем
     for q in queries:
         q = q.strip()
         if not q:
@@ -172,6 +173,9 @@ def scan(queries, per_query, days_back, min_views, max_subs, api_key,
         cstats = get_channels_stats([v["channel_id"] for v in vstats.values()], api_key)
 
         for vid, v in vstats.items():
+            if vid in seen_videos:
+                continue
+            seen_videos.add(vid)
             ch = cstats.get(v["channel_id"], {})
             subs = ch.get("subs", 0)
             # Фильтр Shorts: оставляем только короткие вертикальные ролики по длительности.
