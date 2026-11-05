@@ -128,6 +128,7 @@
   .act-ic { border-radius: 50%; display: grid; place-items: center; background: var(--chip); color: var(--muted); }
   .act-ic.send { color: var(--red); background: var(--red-soft); }
   .act-ic.buy { color: var(--green); background: var(--green-soft); }
+  .act-ic.stake, .act-ic.unstake { color: var(--green); background: var(--green-soft); }
   .act-ic.swap { color: var(--accent); background: var(--accent-soft); }
 
   .empty { text-align: center; color: var(--muted); padding: 40px 30px; font-size: 14px; line-height: 1.5; }
@@ -310,6 +311,60 @@
   .balance .amount { animation: rise .4s ease; }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
+  /* ---- Layout v4: centered header, round actions, crypto card ---- */
+  .appbar { display: grid; grid-template-columns: 1fr auto 1fr; padding: 12px 14px 4px; }
+  .appbar .right { justify-self: end; gap: 6px; }
+  .appbar > .iconbtn { justify-self: start; }
+  .iconbtn { color: var(--muted); padding: 8px; }
+  .wallet-pill { padding: 10px 16px; font-size: 16px; gap: 8px; background: rgba(255,255,255,0.08); }
+  .balance { padding-top: 30px; }
+  .balance .amount { font-size: 54px; letter-spacing: -1px; }
+  .addrchip { display: flex; width: fit-content; margin-left: auto !important; margin-right: auto !important; align-items: center; gap: 4px; margin-top: 6px; background: none; border: none; color: var(--muted); font-size: 16px; font-weight: 500; cursor: pointer; padding: 4px 8px; border-radius: 10px; transition: background .2s, color .2s; }
+  .addrchip:hover { background: rgba(255,255,255,0.06); color: var(--fg); }
+  .addrchip:active { transform: scale(.96); }
+  .change { margin-top: 10px; font-size: 13px; padding: 3px 9px; }
+
+  .actions { padding: 26px 10px 10px; gap: 4px; }
+  .action .circle {
+    width: 58px; height: 58px; border-radius: 50%; color: var(--fg);
+    background: linear-gradient(160deg, #2a3443, #1c2430);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 6px 16px -8px rgba(0,0,0,0.8);
+  }
+  .action .circle::before { background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.12), transparent 60%); }
+  .action:hover .circle { transform: translateY(-3px); filter: none; background: linear-gradient(160deg, #33415a, #212b3a); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 10px 22px -8px rgba(59,123,255,0.55); }
+  .action:active .circle { transform: scale(.88); background: linear-gradient(160deg, #3b7bff, #2a5fe0); box-shadow: 0 0 0 6px rgba(59,123,255,0.15); }
+  .action span:last-child { color: var(--muted); font-size: 13.5px; font-weight: 600; opacity: 1; }
+  .action:hover span:last-child { color: var(--fg); }
+
+  .sechead { display: flex; justify-content: space-between; align-items: center; padding: 22px 16px 10px; }
+  .sectitle, .secmanage { display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 10px; }
+  .sectitle { font-size: 21px; font-weight: 700; }
+  .sectitle svg { color: var(--muted); transition: transform .2s; }
+  .sectitle:hover svg { transform: translateX(3px); }
+  .secmanage { color: var(--muted); font-size: 15px; font-weight: 600; transition: color .2s; }
+  .secmanage:hover { color: var(--fg); }
+  .card { margin: 0 14px; background: var(--surface); border-radius: 24px; overflow: hidden; border: 1px solid rgba(255,255,255,0.04); }
+  .card .token { margin: 0; width: 100%; border-radius: 0; padding: 15px 16px; }
+  .card .token + .token::before { content: ""; position: absolute; top: 0; left: 70px; right: 0; height: 1px; background: var(--line); }
+  .card .coin { width: 46px; height: 46px; }
+  .card .name { font-size: 16.5px; }
+  .vbadge { display: inline-block; vertical-align: -3px; margin-left: 5px; color: var(--accent); }
+  .apy { display: inline-block; margin-left: 6px; font-size: 11.5px; font-weight: 700; color: var(--green); background: var(--green-soft); padding: 3px 7px; border-radius: 7px; vertical-align: 2px; }
+  .card .empty { padding: 26px; }
+  .card + .hint { margin-top: 18px; }
+  .stakebox { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: var(--green-soft); border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
+  .stakebox .name { color: var(--green); }
+  .stakebox .inbtn { background: rgba(255,255,255,0.1); color: var(--fg); }
+  .choice { display: flex; align-items: center; gap: 14px; width: 100%; background: var(--surface-2); border: none; border-radius: 16px; padding: 16px; margin-bottom: 10px; cursor: pointer; text-align: left; transition: background .2s, transform .12s; position: relative; overflow: hidden; }
+  .choice:hover { background: #212b39; }
+  .choice:active { transform: scale(.98); }
+  .choice .mic { width: 44px; height: 44px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; flex: none; }
+
+  .nav { justify-content: space-around; padding-top: 12px; }
+  .navbtn { font-size: 13px; gap: 6px; }
+  .navbtn svg { padding: 0; background: none !important; }
+  .navbtn.active svg { filter: drop-shadow(0 4px 10px rgba(59,123,255,0.5)); }
+
   @media (max-width: 480px) {
     body { padding: 0; background: var(--phone-bg); }
     .phone { max-width: none; border-radius: 0; box-shadow: none; height: auto; min-height: 100%; overflow: visible; }
@@ -336,17 +391,21 @@
 
   <div class="scroll" id="scroll">
     <div class="appbar">
+      <button class="iconbtn" type="button" aria-label="Сканировать QR" id="scanBtn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M4 16v2a2 2 0 0 0 2 2h2M20 8V6a2 2 0 0 0-2-2h-2M20 16v2a2 2 0 0 1-2 2h-2M4 12h16"/></svg>
+      </button>
       <button class="wallet-pill" type="button" id="walletPill">
-        <span class="dot"></span>
-        Main Wallet
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6a3 3 0 0 1 3-3h10a2 2 0 0 1 2 2v1H7a1 1 0 0 0 0 2h12a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><circle cx="16.5" cy="14" r="1.5" fill="var(--phone-bg)"/></svg>
+        Кошелёк
         <span class="demo-badge">ДЕМО</span>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="right">
-        <button class="iconbtn" type="button" aria-label="Сканировать QR" id="scanBtn">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a1 1 0 0 1 1-1h2M4 17v2a1 1 0 0 0 1 1h2M20 7V5a1 1 0 0 0-1-1h-2M20 17v2a1 1 0 0 1-1 1h-2M3 12h18"/></svg>
+        <button class="iconbtn" type="button" aria-label="История" id="historyBtn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
         </button>
         <button class="iconbtn" type="button" aria-label="Настройки" data-open="settings">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
     </div>
@@ -356,6 +415,7 @@
         <div class="amount" id="total">$0.00</div>
         <button class="iconbtn" type="button" id="eye" aria-label="Скрыть баланс"></button>
       </div>
+      <button class="addrchip" type="button" id="addrChip" aria-label="Скопировать адрес кошелька"><span id="addrText"></span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button>
       <div class="change up" id="change">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 15l-6-6-6 6"/></svg>
         <span id="changeText">+$0.00 (0.00%)</span>
@@ -369,31 +429,19 @@
 
     <div class="actions" id="mainActions"></div>
 
-    <div class="tabs" role="tablist">
-      <button class="tab active" type="button" data-tab="tokens">Токены</button>
-      <button class="tab" type="button" data-tab="nft">NFT</button>
-      <button class="tab" type="button" data-tab="activity">Активность</button>
+    <div class="sechead">
+      <button class="sectitle" type="button" data-x="all">Крипта <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>
+      <button class="secmanage" type="button" data-x="manage">Управление <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
     </div>
-
-    <div id="panel-tokens"></div>
-    <div id="panel-nft" hidden>
-      <div class="empty">
-        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>
-        <div>NFT пока нет</div>
-        <div class="sub">Здесь появятся ваши коллекционные токены.</div>
-      </div>
-    </div>
-    <div id="panel-activity" hidden></div>
+    <div class="card" id="panel-tokens"></div>
 
     <p class="hint">Демонстрационный интерфейс кошелька. Монеты вымышленные, к блокчейну ничего не подключено, операции не проводятся. Цены берутся с CoinGecko.</p>
   </div>
 
   <nav class="nav">
-    <button class="navbtn active" type="button" data-nav="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Главная</button>
-    <button class="navbtn" type="button" data-nav="swap"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13"/></svg>Обмен</button>
-    <button class="navbtn" type="button" data-nav="buy"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/></svg>Купить</button>
-    <button class="navbtn" type="button" data-nav="activity"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>История</button>
-    <button class="navbtn" type="button" data-nav="settings"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Ещё</button>
+    <button class="navbtn active" type="button" data-nav="home"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6a3 3 0 0 1 3-3h10a2 2 0 0 1 2 2v1H7a1 1 0 0 0 0 2h12a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><circle cx="16.5" cy="14" r="1.5" fill="var(--phone-bg)"/></svg>Кошелёк</button>
+    <button class="navbtn" type="button" data-nav="swap"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8M15 8h5v5"/></svg>Трейдинг</button>
+    <button class="navbtn" type="button" data-nav="activity"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>История</button>
   </nav>
 
   <div class="scrim" id="scrim">
@@ -433,6 +481,8 @@
   // Starting holdings and the tokens shown on the home screen; both can be changed in "Управление токенами".
   const DEFAULT_QTY = { "usdt-trc20": 39.410139, tron: 0.455002, binancecoin: 0 };
   const DEFAULT_VISIBLE = ["usdt-trc20", "tron", "binancecoin"];
+  // Demo staking terms: yearly yield and how long withdrawal takes.
+  const STAKE = { ethereum: { apy: 3.1, unlock: "1–5 дней" }, solana: { apy: 6.8, unlock: "≈ 2 дня" }, binancecoin: { apy: 2.4, unlock: "7 дней" }, tron: { apy: 4.2, unlock: "14 дней" } };
   // Approximate network fee per transfer, in the network's native coin.
   const FEES = { bitcoin: 0.000012, ethereum: 0.00025, binancecoin: 0.00008, tether: 0.00025, "usdt-trc20": 2.5, solana: 0.000005, ripple: 0.00001, tron: 1.1, dogecoin: 0.5 };
   const SWAP_FEE = 0.003;
@@ -445,7 +495,7 @@
 
   // ---- State (kept in this browser only) ----
   const KEY = "demo-wallet-v3";
-  const freshState = () => ({ qty: { ...DEFAULT_QTY }, visible: [...DEFAULT_VISIBLE], activity: [], hide: false, addr: {} });
+  const freshState = () => ({ qty: { ...DEFAULT_QTY }, visible: [...DEFAULT_VISIBLE], staked: {}, activity: [], hide: false, addr: {} });
   let state = null;
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!state || typeof state.qty !== "object") state = freshState();
@@ -458,8 +508,10 @@
   };
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
   const bal = t => state.qty[t.id] || 0;
+  const staked = t => state.staked[t.id] || 0;
+  const worth = t => (bal(t) + staked(t)) * t.price;
   const setBal = (t, v) => {
-    state.qty[t.id] = Math.max(0, +v.toFixed(10));
+    state.qty[t.id] = v < 5e-8 ? 0 : +v.toFixed(10);
     if (state.qty[t.id] > 0 && !isVisible(t)) setVisible(t, true);
   };
 
@@ -475,7 +527,7 @@
   const usd = { format: fmtUsd };
   const priceFmt = p => p >= 1 ? fmtUsd(p) : "$" + p.toLocaleString("ru-RU", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
   const qf = (n, max) => n.toLocaleString("en-US", { maximumFractionDigits: max ?? (n !== 0 && Math.abs(n) < 1 ? 8 : 6), useGrouping: false });
-  const dayDiff = t => { const v = bal(t) * t.price; return v - v / (1 + t.chg / 100); };
+  const dayDiff = t => { const v = worth(t); return v - v / (1 + t.chg / 100); };
   const pct = c => (c > 0 ? "+" : "") + c.toFixed(2) + "%";
   const cls = c => c > 0 ? "up" : c < 0 ? "down" : "";
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -495,13 +547,19 @@
     check:   '<path d="M5 12l5 5 9-10"/>',
     chev:    '<path d="M6 9l6 6 6-6"/>',
     chevR:   '<path d="M9 6l6 6-6 6"/>',
+    topup:   '<path d="M12 5v14M19 12l-7 7-7-7"/>',
+    trade:   '<path d="M8 20V4M4 8l4-4 4 4M16 4v16M12 16l4 4 4-4"/>',
+    stake:   '<path d="M5 20v-3M9 20v-6M17 20V5M13 9l4-4 4 4"/>',
+    unstake: '<path d="M5 20v-3M9 20v-6M17 4v15M13 15l4 4 4-4"/>',
     eye:     '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     eyeOff:  '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
     clock:   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   };
   const icon = (name, size = 22, sw = 2.2) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${SVG[name]}</svg>`;
-  const actionsHTML = () => [["send", "Отправить"], ["receive", "Получить"], ["buy", "Купить"], ["swap", "Обмен"]]
-    .map(([k, l]) => `<button class="action" type="button" data-act="${k}"><span class="circle">${icon(k)}</span><span>${l}</span></button>`).join("");
+  const MAIN_ACTIONS = [["send", "Отправить", "send"], ["topup", "Пополнить", "topup"], ["swap", "Обменять", "trade"], ["stake", "Застейкать", "stake"]];
+  const actionsHTML = (list = MAIN_ACTIONS) => list
+    .map(([k, l, ic]) => `<button class="action" type="button" data-act="${k}"><span class="circle">${icon(ic, 24, 2.4)}</span><span>${l}</span></button>`).join("");
+  const VBADGE = '<svg class="vbadge" width="18" height="18" viewBox="0 0 24 24" aria-label="проверенный токен"><path fill="currentColor" d="M12 1.5l2.6 1.9 3.2-.1 1 3 2.6 1.9-1 3.1 1 3.1-2.6 1.9-1 3-3.2-.1L12 22.5l-2.6-1.9-3.2.1-1-3-2.6-1.9 1-3.1-1-3.1 2.6-1.9 1-3 3.2.1z"/><path d="M8 12.3l2.7 2.7L16.2 9.4" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   // ---- Toast ----
   let toastTimer;
@@ -513,34 +571,32 @@
 
   // ---- Main screen ----
   const panelTokens = $("#panel-tokens");
-  const panelActivity = $("#panel-activity");
 
   function tokenRow(t, flash = "") {
-    const v = bal(t) * t.price;
+    const v = worth(t);
     return `<button class="token ${flash}" type="button" data-id="${t.id}">
       ${coinHTML(t)}
       <div class="info">
-        <div class="name">${t.name}${t.tag ? `<small class="tag">${t.tag}</small>` : ""}</div>
-        <div class="sub">${state.hide ? "•••" : qf(bal(t))} ${t.sym}</div>
+        <div class="name">${t.sym}${VBADGE}${t.tag ? `<small class="tag">${t.tag}</small>` : ""}${STAKE[t.id] ? `<span class="apy">${STAKE[t.id].apy.toFixed(2).replace(".", ",")}% APY</span>` : ""}</div>
+        <div class="sub">${priceFmt(t.price)} <span class="${cls(t.chg)}">${pct(t.chg)}</span></div>
       </div>
       <div class="vals">
-        <div class="fiat">${money(v)}</div>
-        <div class="qty ${state.hide ? "" : cls(+dayDiff(t).toPrecision(3))}">${state.hide ? "" : (dayDiff(t) > 0 ? "+" : "") + usd.format(+dayDiff(t).toPrecision(3))}</div>
+        <div class="fiat">${state.hide ? "•••" : qf(bal(t) + staked(t))}</div>
+        <div class="qty">${money(v)}</div>
       </div>
     </button>`;
   }
 
   function render(prev) {
     let total = 0, totalPrev = 0;
-    const shown = tokens.filter(isVisible).sort((a, b) => bal(b) * b.price - bal(a) * a.price);
-    panelTokens.innerHTML = `<div style="height:6px"></div>` + shown.map(t => {
-      const v = bal(t) * t.price;
+    const shown = tokens.filter(isVisible).sort((a, b) => worth(b) - worth(a));
+    panelTokens.innerHTML = shown.map(t => {
+      const v = worth(t);
       total += v; totalPrev += v / (1 + t.chg / 100);
       let flash = "";
       if (prev && prev[t.id] != null && prev[t.id] !== t.price) flash = t.price > prev[t.id] ? "flash-up" : "flash-down";
       return tokenRow(t, flash);
-    }).join("") + (shown.length ? "" : `<div class="empty">Нет токенов на главном экране</div>`)
-      + `<div class="pillrow"><button class="pill" type="button" data-x="all">Посмотреть все ${icon("chevR", 16, 2.6)}</button><button class="pill ghost" type="button" data-x="manage">Управление</button></div>`;
+    }).join("") + (shown.length ? "" : `<div class="empty">Нет токенов на главном экране</div>`);
 
     const diff = total - totalPrev;
     const diffPct = totalPrev ? diff / totalPrev * 100 : 0;
@@ -550,7 +606,7 @@
       : (diff < 0 ? "−" : "+") + usd.format(Math.abs(diff)) + " (" + Math.abs(diffPct).toFixed(2) + "%)";
     $("#eye").innerHTML = icon(state.hide ? "eyeOff" : "eye", 20, 2);
     $("#eye").setAttribute("aria-label", state.hide ? "Показать баланс" : "Скрыть баланс");
-    renderActivity(panelActivity);
+    $("#addrText").textContent = short(addrFor(byId.tron)).replace("…", "...");
   }
 
   function activityHTML(a) {
@@ -563,12 +619,16 @@
     } else if (a.type === "buy") {
       title = `Покупка ${t.sym}`; sub = BUY_METHODS[a.method]?.label || "";
       main = `<span class="up">+${qf(a.amt)} ${t.sym}</span>`; second = money(a.usd);
+    } else if (a.type === "stake" || a.type === "unstake") {
+      title = a.type === "stake" ? `Стейкинг ${t.sym}` : `Вывод из стейкинга ${t.sym}`;
+      sub = a.type === "stake" ? `${STAKE[t.id]?.apy ?? ""}% APY` : "Возврат на баланс";
+      main = `<span class="${a.type === "stake" ? "" : "up"}">${a.type === "stake" ? "" : "+"}${qf(a.amt)} ${t.sym}</span>`; second = money(a.usd);
     } else {
       title = `Обмен ${t.sym} → ${t2.sym}`; sub = `${qf(a.amt)} ${t.sym}`;
       main = `<span class="up">+${qf(a.toAmt)} ${t2.sym}</span>`; second = `−${qf(a.amt)} ${t.sym}`;
     }
     return `<div class="token">
-      <span class="coin act-ic ${a.type}">${icon(a.type === "send" ? "send" : a.type === "buy" ? "receive" : "swap", 18)}</span>
+      <span class="coin act-ic ${a.type}">${icon({ send: "send", buy: "receive", stake: "stake", unstake: "unstake" }[a.type] || "swap", 18)}</span>
       <div class="info"><div class="name">${title}</div><div class="sub">${when(a.ts)} · ${sub}</div></div>
       <div class="vals"><div class="fiat">${state.hide ? "•••" : main}</div><div class="qty">${state.hide ? "" : second}</div></div>
     </div>`;
@@ -586,10 +646,8 @@
     save(); render();
   }
 
-  function showTab(name) {
-    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b.dataset.tab === name));
-    ["tokens", "nft", "activity"].forEach(n => $("#panel-" + n).hidden = n !== name);
-  }
+  function historyView(body) { renderActivity(body); }
+  const openHistory = () => replace("История", historyView);
 
   // ---- Bottom sheet with a simple view stack ----
   const scrim = $("#scrim"), sheetBody = $("#sheetBody");
@@ -614,13 +672,13 @@
   document.addEventListener("keydown", e => { if (e.key === "Escape" && stack.length) closeSheet(); });
 
   // ---- Shared views ----
-  function picker(onPick, { exclude, onlyOwned } = {}) {
+  function picker(onPick, { exclude, onlyOwned, only } = {}) {
     return body => {
       body.innerHTML = `<input class="input search" type="search" placeholder="Поиск монеты" aria-label="Поиск монеты"><div class="plist"></div>`;
       const inp = $(".search", body), list = $(".plist", body);
       const draw = () => {
         const q = inp.value.trim().toLowerCase();
-        const rows = tokens.filter(t => t.id !== exclude && (!onlyOwned || bal(t) > 0)
+        const rows = tokens.filter(t => t.id !== exclude && (!onlyOwned || bal(t) > 0) && (!only || only.includes(t.id))
           && (!q || t.name.toLowerCase().includes(q) || t.sym.toLowerCase().includes(q)));
         list.innerHTML = rows.length ? rows.map(t => tokenRow(t)).join("") : `<p class="empty">Ничего не найдено</p>`;
       };
@@ -641,7 +699,7 @@
       <button class="btn secondary" type="button" data-x="history">Открыть историю</button>
       <p class="note">Демо-режим: настоящая операция не проводилась.</p>`;
       body.querySelector('[data-x="close"]').onclick = closeSheet;
-      body.querySelector('[data-x="history"]').onclick = () => { closeSheet(); showTab("activity"); };
+      body.querySelector('[data-x="history"]').onclick = () => replace("История", historyView);
     };
   }
 
@@ -926,24 +984,86 @@
     receive: t => t ? go(`Получить ${t.sym}`, receiveView(t)) : go("Получить", picker(x => push(`Получить ${x.sym}`, receiveView(x)))),
     buy: t => go("Купить", buyView(t)),
     swap: t => go("Обмен", swapView(t)),
+    topup: t => go("Пополнить", topupView(t)),
+    stake: t => t ? go(`Стейкинг ${t.sym}`, stakeView(t)) : go("Застейкать", picker(x => push(`Стейкинг ${x.sym}`, stakeView(x)), { only: Object.keys(STAKE) })),
   };
+
+  function topupView(t) {
+    return body => {
+      body.innerHTML = `
+        <button class="choice" type="button" data-x="recv"><span class="mic">${icon("receive", 22)}</span><span><div class="name">Перевод с другого кошелька</div><div class="sub">Показать адрес и QR-код</div></span></button>
+        <button class="choice" type="button" data-x="buy"><span class="mic">${icon("buy", 22)}</span><span><div class="name">Купить криптовалюту</div><div class="sub">Картой, с телефона или переводом</div></span></button>
+        <button class="choice" type="button" data-x="swap"><span class="mic">${icon("trade", 22)}</span><span><div class="name">Обменять другую монету</div><div class="sub">Из того, что уже есть в кошельке</div></span></button>`;
+      body.querySelector('[data-x="recv"]').onclick = () => t ? push(`Получить ${t.sym}`, receiveView(t)) : push("Получить", picker(x => push(`Получить ${x.sym}`, receiveView(x))));
+      body.querySelector('[data-x="buy"]').onclick = () => push("Купить", buyView(t));
+      body.querySelector('[data-x="swap"]').onclick = () => push("Обмен", swapView());
+    };
+  }
+
+  function stakeView(t) {
+    const d = { amt: "" };
+    return body => {
+      const st = STAKE[t.id], fee = FEES[t.id];
+      const maxAmt = Math.max(0, floor8(bal(t) - fee));
+      body.innerHTML = `
+        <div class="asset">${coinHTML(t)}<div class="info"><div class="name">${t.sym}${VBADGE}<span class="apy">${st.apy.toFixed(2).replace(".", ",")}% APY</span></div><div class="sub">Доступно: ${qf(bal(t))} ${t.sym}${staked(t) ? ` · в стейкинге ${qf(staked(t))}` : ""}</div></div></div>
+        <label class="label" for="kAmt">Сумма</label>
+        <div class="inwrap"><input class="input" id="kAmt" inputmode="decimal" autocomplete="off" placeholder="0"><span class="unit">${t.sym}</span><button class="inbtn" type="button" data-x="max">Макс</button></div>
+        <div class="hintline" id="kUsd">≈ $0,00</div>
+        ${rowsHTML([["Доходность", st.apy + "% годовых"], ["Доход в месяц", `<span id="kMon">0 ${t.sym}</span>`], ["Доход в год", `<span id="kYear">0 ${t.sym}</span>`], ["Вывод", st.unlock], ["Комиссия сети", `${qf(fee, 8)} ${t.sym}`]])}
+        <p class="err" id="kErr"></p>
+        <button class="btn" type="button" id="kGo" disabled>Застейкать</button>
+        <p class="note">Демо-режим: монеты никуда не блокируются, доход не начисляется.</p>`;
+      const inp = $("#kAmt", body), err = $("#kErr", body), goBtn = $("#kGo", body);
+      inp.value = d.amt;
+      const upd = () => {
+        d.amt = inp.value;
+        const n = parseAmt(d.amt), ok = n > 0;
+        const y = ok ? n * st.apy / 100 : 0;
+        $("#kUsd", body).textContent = "≈ " + usd.format(ok ? n * t.price : 0);
+        $("#kYear", body).textContent = `${qf(y, 6)} ${t.sym} · ${usd.format(y * t.price)}`;
+        $("#kMon", body).textContent = `${qf(y / 12, 6)} ${t.sym} · ${usd.format(y / 12 * t.price)}`;
+        const msg = ok && n > maxAmt ? "Недостаточно средств с учётом комиссии" : "";
+        err.textContent = msg;
+        goBtn.disabled = !ok || !!msg;
+      };
+      inp.oninput = upd; upd();
+      body.querySelector('[data-x="max"]').onclick = () => { inp.value = String(maxAmt); upd(); };
+      goBtn.onclick = () => {
+        const n = parseAmt(d.amt);
+        setBal(t, bal(t) - n - fee);
+        state.staked[t.id] = +(staked(t) + n).toFixed(10);
+        addActivity({ type: "stake", id: t.id, amt: n, usd: n * t.price });
+        replace("Готово", success({ title: "Монеты в стейкинге", amount: `${qf(n)} ${t.sym}`, line: `Доходность ${st.apy}% годовых · вывод ${st.unlock}` }));
+      };
+    };
+  }
 
   function tokenView(t) {
     return body => {
       body.innerHTML = `
         <div class="tdhead">${coinHTML(t)}<div class="tdprice">${priceFmt(t.price)}</div><div class="sub ${cls(t.chg)}">${pct(t.chg)} за 24 ч</div></div>
         <div class="holding"><div><div class="sub">Ваш баланс</div><div class="name">${state.hide ? "•••" : qf(bal(t))} ${t.sym}</div></div><div class="fiat">${money(bal(t) * t.price)}</div></div>
-        <div class="actions">${actionsHTML()}</div>
+        ${staked(t) ? `<div class="stakebox"><div><div class="sub">В стейкинге · ${STAKE[t.id]?.apy}% APY</div><div class="name">${qf(staked(t))} ${t.sym}</div></div><button class="inbtn" type="button" data-x="unstake">Вывести</button></div>` : ""}
+        <div class="actions">${actionsHTML([["send", "Отправить", "send"], ["receive", "Получить", "receive"], ["swap", "Обменять", "trade"], STAKE[t.id] ? ["stake", "Застейкать", "stake"] : ["buy", "Купить", "buy"]])}</div>
         ${rowsHTML([["Сеть", t.network]])}
         <h4>История</h4>
         <div id="tAct"></div>`;
       renderActivity($("#tAct", body), t.id);
+      const un = body.querySelector('[data-x="unstake"]');
+      if (un) un.onclick = () => {
+        const n = staked(t);
+        state.staked[t.id] = 0;
+        setBal(t, bal(t) + n);
+        addActivity({ type: "unstake", id: t.id, amt: n, usd: n * t.price });
+        replace("Готово", success({ title: "Выведено из стейкинга", amount: `+${qf(n)} ${t.sym}`, line: "Монеты вернулись на баланс" }));
+      };
       body.querySelector(".actions").onclick = e => { const b = e.target.closest("[data-act]"); if (b) flows[b.dataset.act](t); };
     };
   }
 
   function allTokensView(body) {
-    const sorted = [...tokens].sort((a, b) => bal(b) * b.price - bal(a) * a.price);
+    const sorted = [...tokens].sort((a, b) => worth(b) - worth(a));
     body.innerHTML = `<div class="plist">${sorted.map(t => tokenRow(t)).join("")}</div>
       <button class="btn secondary" type="button" data-x="manage">Управление токенами</button>`;
     $(".plist", body).onclick = e => { const b = e.target.closest("[data-id]"); if (b) { const t = byId[b.dataset.id]; push(t.name, tokenView(t)); } };
@@ -994,7 +1114,7 @@
   }
 
   // ---- Press feedback: ripple and a short vibration on phones ----
-  const PRESSABLE = ".action .circle, .btn, .pill, button.token, .method, .chipbtn";
+  const PRESSABLE = ".action .circle, .btn, .pill, button.token, .method, .chipbtn, .choice";
   document.addEventListener("pointerdown", e => {
     const host = e.target.closest(PRESSABLE) || e.target.closest(".action")?.querySelector(".circle");
     if (!host || host.disabled) return;
@@ -1019,15 +1139,23 @@
     const b = e.target.closest("[data-id]");
     if (b) { const t = byId[b.dataset.id]; replace(t.name, tokenView(t)); }
   };
-  document.querySelectorAll(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  document.querySelector(".sechead").onclick = e => {
+    const x = e.target.closest("[data-x]");
+    if (x) x.dataset.x === "all" ? replace("Все токены", allTokensView) : replace("Управление токенами", manageView);
+  };
+  $("#historyBtn").onclick = openHistory;
+  $("#addrChip").onclick = async () => {
+    try { await navigator.clipboard.writeText(addrFor(byId.tron)); toast("Демо-адрес скопирован"); }
+    catch (e) { toast("Не удалось скопировать"); }
+  };
   $("#eye").onclick = () => { state.hide = !state.hide; save(); render(); };
   $("#scanBtn").onclick = () => toast("Сканер QR недоступен в демо");
   $("#walletPill").onclick = () => toast("В демо доступен один кошелёк");
   document.querySelector('[data-open="settings"]').onclick = () => replace("Настройки", settingsView);
   document.querySelectorAll(".navbtn").forEach(b => b.onclick = () => {
     const n = b.dataset.nav;
-    if (n === "home") { closeSheet(); showTab("tokens"); $("#scroll").scrollTo({ top: 0 }); window.scrollTo({ top: 0 }); }
-    else if (n === "activity") { closeSheet(); showTab("activity"); }
+    if (n === "home") { closeSheet(); $("#scroll").scrollTo({ top: 0 }); window.scrollTo({ top: 0 }); }
+    else if (n === "activity") openHistory();
     else if (n === "settings") replace("Настройки", settingsView);
     else { stack = []; flows[n](); }
   });
