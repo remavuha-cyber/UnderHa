@@ -111,6 +111,18 @@
   @keyframes fu { 0% { color: var(--green); } 100% { color: var(--fg); } }
   @keyframes fd { 0% { color: var(--red); } 100% { color: var(--fg); } }
 
+  .sechead { display: flex; align-items: center; gap: 6px; background: none; border: none; font-size: 20px; font-weight: 700; padding: 16px 20px 6px; cursor: pointer; }
+  .pillrow { display: flex; gap: 10px; padding: 10px 20px 6px; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; background: var(--chip); border: none; border-radius: 999px; padding: 12px 18px; font-weight: 600; font-size: 15px; cursor: pointer; }
+  .pill.ghost { background: none; color: var(--accent); }
+  .mrow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .mrow .coin { width: 34px; height: 34px; }
+  .qtyin { width: 96px; flex: none; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; color: var(--fg); font-size: 15px; padding: 8px 10px; text-align: right; font-variant-numeric: tabular-nums; }
+  .qtyin:focus { border-color: var(--accent); outline: none; }
+  .qtyin.bad { border-color: var(--red); }
+  .switch { flex: none; }
+  .linkrow { width: 100%; background: none; border-left: none; border-right: none; border-top: none; cursor: pointer; text-align: left; color: var(--fg); }
+  .linkrow svg { color: var(--muted); }
   .act-ic { border-radius: 50%; display: grid; place-items: center; background: var(--chip); color: var(--muted); }
   .act-ic.send { color: var(--red); background: var(--red-soft); }
   .act-ic.buy { color: var(--green); background: var(--green-soft); }
@@ -324,20 +336,22 @@
   const tokens = [
     { id: "bitcoin",     sym: "BTC",  name: "Bitcoin",  icon: "btc",  network: "Bitcoin",         price: 96800, chg: 1.2 },
     { id: "ethereum",    sym: "ETH",  name: "Ethereum", icon: "eth",  network: "Ethereum",        price: 3400,  chg: 0.8 },
-    { id: "binancecoin", sym: "BNB",  name: "BNB Smart Chain", icon: "bnb", network: "BNB Smart Chain (BEP20)", price: 610, chg: -0.4 },
-    { id: "tether",      sym: "USDT", name: "Tether",   icon: "usdt", net: "eth", tag: "ERC20", network: "Ethereum (ERC20)", price: 1.00, chg: 0.0 },
+    { id: "binancecoin", sym: "BNB",  name: "BNB", icon: "bnb", network: "BNB Smart Chain (BEP20)", price: 610, chg: -0.4 },
+    { id: "usdt-trc20",  cg: "tether", sym: "USDT", name: "Tether USDT", icon: "usdt", net: "trx", tag: "TRC20", network: "TRON (TRC20)", price: 1.00, chg: 0.0 },
+    { id: "tether",      sym: "USDT", name: "Tether USDT", icon: "usdt", net: "eth", tag: "ERC20", network: "Ethereum (ERC20)", price: 1.00, chg: 0.0 },
     { id: "solana",      sym: "SOL",  name: "Solana",   icon: "sol",  network: "Solana",          price: 185,   chg: 2.1 },
     { id: "ripple",      sym: "XRP",  name: "XRP",      icon: "xrp",  network: "XRP Ledger",      price: 2.2,   chg: -1.1 },
-    { id: "tron",        sym: "TRX",  name: "TRON",     icon: "trx",  network: "TRON (TRC20)",    price: 0.25,  chg: 0.3 },
+    { id: "tron",        sym: "TRX",  name: "Tron",     icon: "trx",  network: "TRON",            price: 0.32,  chg: 0.3 },
     { id: "dogecoin",    sym: "DOGE", name: "Dogecoin", icon: "doge", network: "Dogecoin",        price: 0.17,  chg: -2.0 },
   ];
   const byId = Object.fromEntries(tokens.map(t => [t.id, t]));
-  const byIcon = Object.fromEntries(tokens.map(t => [t.icon, t]));
+  const byIcon = { eth: byId.ethereum, trx: byId.tron };
 
-  // Fictional starting holdings.
-  const DEFAULT_QTY = { bitcoin: 0.0642, ethereum: 1.284, binancecoin: 4.5, tether: 1850, solana: 12.7, ripple: 640, tron: 2400, dogecoin: 3100 };
+  // Starting holdings and the tokens shown on the home screen; both can be changed in "Управление токенами".
+  const DEFAULT_QTY = { "usdt-trc20": 39.410139, tron: 0.455002, binancecoin: 0 };
+  const DEFAULT_VISIBLE = ["usdt-trc20", "tron", "binancecoin"];
   // Approximate network fee per transfer, in the network's native coin.
-  const FEES = { bitcoin: 0.000012, ethereum: 0.00025, binancecoin: 0.00008, tether: 0.00025, solana: 0.000005, ripple: 0.00001, tron: 1.1, dogecoin: 0.5 };
+  const FEES = { bitcoin: 0.000012, ethereum: 0.00025, binancecoin: 0.00008, tether: 0.00025, "usdt-trc20": 2.5, solana: 0.000005, ripple: 0.00001, tron: 1.1, dogecoin: 0.5 };
   const SWAP_FEE = 0.003;
   const BUY_METHODS = {
     card:   { label: "Банковская карта", sub: "Visa, Mastercard, МИР", fee: 0.025, icon: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/>' },
@@ -347,21 +361,38 @@
   const feeToken = t => t.net ? byIcon[t.net] : t;
 
   // ---- State (kept in this browser only) ----
-  const KEY = "demo-wallet-v2";
-  const freshState = () => ({ qty: { ...DEFAULT_QTY }, activity: [], hide: false, addr: {} });
+  const KEY = "demo-wallet-v3";
+  const freshState = () => ({ qty: { ...DEFAULT_QTY }, visible: [...DEFAULT_VISIBLE], activity: [], hide: false, addr: {} });
   let state = null;
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
   if (!state || typeof state.qty !== "object") state = freshState();
   state = { ...freshState(), ...state, qty: { ...DEFAULT_QTY, ...state.qty } };
+  state.visible = state.visible.filter(id => byId[id]);
+  const isVisible = t => state.visible.includes(t.id);
+  const setVisible = (t, on) => {
+    state.visible = state.visible.filter(id => id !== t.id);
+    if (on) state.visible.push(t.id);
+  };
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
   const bal = t => state.qty[t.id] || 0;
-  const setBal = (t, v) => { state.qty[t.id] = Math.max(0, +v.toFixed(10)); };
+  const setBal = (t, v) => {
+    state.qty[t.id] = Math.max(0, +v.toFixed(10));
+    if (state.qty[t.id] > 0 && !isVisible(t)) setVisible(t, true);
+  };
 
   // ---- Formatting ----
   const $ = (s, r = document) => r.querySelector(s);
-  const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-  const priceFmt = p => p >= 1 ? usd.format(p) : "$" + p.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
-  const qf = (n, max) => n.toLocaleString("en-US", { maximumFractionDigits: max ?? (n !== 0 && Math.abs(n) < 1 ? 8 : 4) });
+  const fmtUsd = v => {
+    const a = Math.abs(v);
+    const body = a > 0 && a < 0.01
+      ? a.toLocaleString("ru-RU", { maximumSignificantDigits: 3 })
+      : a.toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (v < 0 ? "-" : "") + "$" + body;
+  };
+  const usd = { format: fmtUsd };
+  const priceFmt = p => p >= 1 ? fmtUsd(p) : "$" + p.toLocaleString("ru-RU", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+  const qf = (n, max) => n.toLocaleString("en-US", { maximumFractionDigits: max ?? (n !== 0 && Math.abs(n) < 1 ? 8 : 6), useGrouping: false });
+  const dayDiff = t => { const v = bal(t) * t.price; return v - v / (1 + t.chg / 100); };
   const pct = c => (c > 0 ? "+" : "") + c.toFixed(2) + "%";
   const cls = c => c > 0 ? "up" : c < 0 ? "down" : "";
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -380,6 +411,7 @@
     swap:    '<path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13"/>',
     check:   '<path d="M5 12l5 5 9-10"/>',
     chev:    '<path d="M6 9l6 6 6-6"/>',
+    chevR:   '<path d="M9 6l6 6-6 6"/>',
     eye:     '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     eyeOff:  '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.7 9.7 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
     clock:   '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
@@ -406,24 +438,26 @@
       ${coinHTML(t)}
       <div class="info">
         <div class="name">${t.name}${t.tag ? `<small class="tag">${t.tag}</small>` : ""}</div>
-        <div class="sub">${priceFmt(t.price)} <span class="${cls(t.chg)}">${pct(t.chg)}</span></div>
+        <div class="sub">${state.hide ? "•••" : qf(bal(t))} ${t.sym}</div>
       </div>
       <div class="vals">
         <div class="fiat">${money(v)}</div>
-        <div class="qty">${state.hide ? "•••" : qf(bal(t))} ${t.sym}</div>
+        <div class="qty ${state.hide ? "" : cls(+dayDiff(t).toPrecision(3))}">${state.hide ? "" : (dayDiff(t) > 0 ? "+" : "") + usd.format(+dayDiff(t).toPrecision(3))}</div>
       </div>
     </button>`;
   }
 
   function render(prev) {
     let total = 0, totalPrev = 0;
-    panelTokens.innerHTML = tokens.map(t => {
+    const shown = tokens.filter(isVisible).sort((a, b) => bal(b) * b.price - bal(a) * a.price);
+    panelTokens.innerHTML = `<div style="height:6px"></div>` + shown.map(t => {
       const v = bal(t) * t.price;
       total += v; totalPrev += v / (1 + t.chg / 100);
       let flash = "";
       if (prev && prev[t.id] != null && prev[t.id] !== t.price) flash = t.price > prev[t.id] ? "flash-up" : "flash-down";
       return tokenRow(t, flash);
-    }).join("");
+    }).join("") + (shown.length ? "" : `<div class="empty">Нет токенов на главном экране</div>`)
+      + `<div class="pillrow"><button class="pill" type="button" data-x="all">Посмотреть все ${icon("chevR", 16, 2.6)}</button><button class="pill ghost" type="button" data-x="manage">Управление</button></div>`;
 
     const diff = total - totalPrev;
     const diffPct = totalPrev ? diff / totalPrev * 100 : 0;
@@ -600,7 +634,7 @@
   }
 
   // ---- Receive ----
-  const PREFIX = { bitcoin: "bc1qdemo", ethereum: "0xDEMO", binancecoin: "0xDEMO", tether: "0xDEMO", solana: "DEMo", ripple: "rDEMO", tron: "TDEMO", dogecoin: "DDEMO" };
+  const PREFIX = { bitcoin: "bc1qdemo", ethereum: "0xDEMO", binancecoin: "0xDEMO", tether: "0xDEMO", "usdt-trc20": "TDEMO", solana: "DEMo", ripple: "rDEMO", tron: "TDEMO", dogecoin: "DDEMO" };
   function addrFor(t) {
     if (!state.addr[t.id]) {
       const chars = "abcdef0123456789";
@@ -821,14 +855,47 @@
     };
   }
 
+  function allTokensView(body) {
+    const sorted = [...tokens].sort((a, b) => bal(b) * b.price - bal(a) * a.price);
+    body.innerHTML = `<div class="plist">${sorted.map(t => tokenRow(t)).join("")}</div>
+      <button class="btn secondary" type="button" data-x="manage">Управление токенами</button>`;
+    $(".plist", body).onclick = e => { const b = e.target.closest("[data-id]"); if (b) { const t = byId[b.dataset.id]; push(t.name, tokenView(t)); } };
+    body.querySelector('[data-x="manage"]').onclick = () => push("Управление токенами", manageView);
+  }
+
+  function manageView(body) {
+    body.innerHTML = `<p class="note" style="margin-top:0">Укажите количество каждой монеты и выберите, какие показывать на главном экране. Стоимость считается по живому курсу.</p>
+      ${tokens.map(t => `<div class="mrow" data-id="${t.id}">
+        ${coinHTML(t)}
+        <div class="info"><div class="name">${t.name}${t.tag ? `<small class="tag">${t.tag}</small>` : ""}</div><div class="sub" data-v>${usd.format(bal(t) * t.price)}</div></div>
+        <input class="qtyin" inputmode="decimal" autocomplete="off" value="${bal(t) ? qf(bal(t), 10) : ""}" placeholder="0" aria-label="Количество ${t.sym} (${t.network})">
+        <button class="switch" type="button" role="switch" aria-checked="${isVisible(t)}" aria-label="Показывать ${t.name} ${t.tag || ""}"></button>
+      </div>`).join("")}`;
+    body.querySelectorAll(".mrow").forEach(row => {
+      const t = byId[row.dataset.id], inp = $(".qtyin", row), sw = $(".switch", row);
+      inp.oninput = () => {
+        const n = inp.value.trim() === "" ? 0 : parseAmt(inp.value);
+        inp.classList.toggle("bad", !(n >= 0));
+        if (!(n >= 0)) return;
+        setBal(t, n);
+        sw.setAttribute("aria-checked", isVisible(t));
+        $("[data-v]", row).textContent = usd.format(bal(t) * t.price);
+        save(); render();
+      };
+      sw.onclick = () => { setVisible(t, !isVisible(t)); sw.setAttribute("aria-checked", isVisible(t)); save(); render(); };
+    });
+  }
+
   function settingsView(body) {
     body.innerHTML = `
+      <button class="setrow linkrow" type="button" id="toManage"><span>Управление токенами</span>${icon("chevR", 18, 2.4)}</button>
       <div class="setrow"><span>Скрыть баланс</span><button class="switch" type="button" role="switch" id="swHide" aria-checked="${state.hide}" aria-label="Скрыть баланс"></button></div>
       <div class="setrow"><span>Валюта</span><span class="sub">USD</span></div>
       <div class="setrow"><span>Кошелёк</span><span class="sub">Main Wallet · демо</span></div>
       <div class="setrow"><span>Источник цен</span><span class="sub">CoinGecko</span></div>
       <button class="btn secondary danger" type="button" id="reset">Сбросить демо-данные</button>
       <p class="note">Учебный интерфейс кошелька. Балансы вымышленные и хранятся только в этом браузере. Настоящие средства, ключи и платежи здесь не используются.</p>`;
+    $("#toManage", body).onclick = () => push("Управление токенами", manageView);
     $("#swHide", body).onclick = e => {
       state.hide = !state.hide; save(); render();
       e.currentTarget.setAttribute("aria-checked", state.hide);
@@ -842,7 +909,12 @@
   // ---- Wiring ----
   $("#mainActions").innerHTML = actionsHTML();
   $("#mainActions").onclick = e => { const b = e.target.closest("[data-act]"); if (b) flows[b.dataset.act](); };
-  panelTokens.onclick = e => { const b = e.target.closest("[data-id]"); if (b) { const t = byId[b.dataset.id]; replace(t.name, tokenView(t)); } };
+  panelTokens.onclick = e => {
+    const x = e.target.closest("[data-x]");
+    if (x) return x.dataset.x === "all" ? replace("Все токены", allTokensView) : replace("Управление токенами", manageView);
+    const b = e.target.closest("[data-id]");
+    if (b) { const t = byId[b.dataset.id]; replace(t.name, tokenView(t)); }
+  };
   document.querySelectorAll(".tab").forEach(b => b.onclick = () => showTab(b.dataset.tab));
   $("#eye").onclick = () => { state.hide = !state.hide; save(); render(); };
   $("#scanBtn").onclick = () => toast("Сканер QR недоступен в демо");
@@ -858,7 +930,7 @@
 
   // ---- Live prices ----
   const feed = $("#feed"), feedText = $("#feedText");
-  const API = "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&include_24hr_change=true&ids=" + tokens.map(t => t.id).join(",");
+  const API = "https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd&include_24hr_change=true&ids=" + [...new Set(tokens.map(t => t.cg || t.id))].join(",");
   let loading = false;
   async function loadPrices() {
     if (loading) return;
@@ -873,7 +945,7 @@
       const data = await res.json();
       let got = 0;
       for (const t of tokens) {
-        const d = data[t.id];
+        const d = data[t.cg || t.id];
         if (d && typeof d.usd === "number") {
           t.price = d.usd;
           if (typeof d.usd_24h_change === "number") t.chg = d.usd_24h_change;
