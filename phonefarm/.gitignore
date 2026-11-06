@@ -1,0 +1,5 @@
+server/.env
+server/rustdesk-data/
+server/panel-data/
+server/caddy-data/
+server/panel/data/

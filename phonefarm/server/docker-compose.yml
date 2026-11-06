@@ -1,0 +1,64 @@
+# Всё, что крутится на VPS:
+#   hbbs + hbbr — ваш собственный сервер RustDesk (ID-сервер и ретранслятор)
+#   panel       — панель PhoneFarm (профили + загрузка видео)
+#   caddy       — HTTPS для панели (включается, если есть домен: --profile https)
+#
+# Запуск:   cp .env.example .env && nano .env && docker compose up -d
+# С HTTPS:  docker compose --profile https up -d
+
+services:
+  hbbs:
+    image: rustdesk/rustdesk-server:latest
+    container_name: hbbs
+    command: hbbs
+    volumes:
+      - ./rustdesk-data:/root
+    network_mode: host
+    depends_on:
+      - hbbr
+    restart: unless-stopped
+
+  hbbr:
+    image: rustdesk/rustdesk-server:latest
+    container_name: hbbr
+    command: hbbr
+    volumes:
+      - ./rustdesk-data:/root
+    network_mode: host
+    restart: unless-stopped
+
+  panel:
+    image: node:22-alpine
+    container_name: phonefarm-panel
+    working_dir: /app
+    command: node server.js
+    volumes:
+      - ./panel:/app:ro
+      - ./panel-data:/data
+    environment:
+      DATA_DIR: /data
+      PORT: 8080
+      PANEL_USER: ${PANEL_USER:-admin}
+      PANEL_PASSWORD: ${PANEL_PASSWORD:?Задайте PANEL_PASSWORD в .env}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-4096}
+    ports:
+      # Без домена панель доступна по http://IP:8080.
+      # С доменом и Caddy можно сменить на "127.0.0.1:8080:8080", чтобы ходить только через HTTPS.
+      - "${PANEL_BIND:-0.0.0.0}:8080:8080"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    container_name: phonefarm-caddy
+    profiles: ["https"]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PANEL_DOMAIN: ${PANEL_DOMAIN:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy-data:/data
+    depends_on:
+      - panel
+    restart: unless-stopped

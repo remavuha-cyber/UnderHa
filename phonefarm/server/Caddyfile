@@ -1,0 +1,6 @@
+{$PANEL_DOMAIN} {
+	request_body {
+		max_size 5GB
+	}
+	reverse_proxy panel:8080
+}
