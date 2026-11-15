@@ -15,16 +15,21 @@ CONFIG = json.loads((ROOT / "config.json").read_text(encoding="utf-8"))
 
 
 def build_metadata(script: dict) -> dict:
-    tags_hash = " ".join(CONFIG["default_hashtags"] + ["#" + t for t in script.get("tags", [])])
-    title = script["title"]
-    if "#shorts" not in title.lower() and len(title) + 8 <= 100:
-        title += " #shorts"
-    description = "\n\n".join([" ".join(script["lines"]), CONFIG["description_footer"], tags_hash])
+    is_edit = "source" in script
+    base_tags = CONFIG["edit_hashtags"] if is_edit else CONFIG["default_hashtags"]
+    tags_hash = " ".join(base_tags + ["#" + t for t in script.get("tags", [])])
+    title = script.get("title") or script["hook"]
+    suffix = " " + " ".join(base_tags[:2])
+    if "#" not in title and len(title) + len(suffix) <= 100:
+        title += suffix
+    body = script.get("description") or ("Фильм: " + script["film"] if is_edit else " ".join(script["lines"]))
+    footer = CONFIG["edit_footer"] if is_edit else CONFIG["description_footer"]
+    description = "\n\n".join([body, footer, tags_hash])
     return {
         "snippet": {
             "title": title[:100],
             "description": description[:5000],
-            "tags": ["фильмы", "кино", "факты о кино", script["film"]] + script.get("tags", []),
+            "tags": ["фильмы", "кино", "эдит", script.get("film", "")] + script.get("tags", []),
             "categoryId": CONFIG.get("category_id", "1"),
             "defaultLanguage": "ru",
             "defaultAudioLanguage": "ru",
@@ -32,7 +37,7 @@ def build_metadata(script: dict) -> dict:
         "status": {
             "privacyStatus": CONFIG.get("privacy_status", "public"),
             "selfDeclaredMadeForKids": False,
-            "containsSyntheticMedia": True,
+            "containsSyntheticMedia": not is_edit,
         },
     }
 
