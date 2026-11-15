@@ -1,0 +1,50 @@
+name: Daily Short
+
+on:
+  schedule:
+    - cron: "17 15 * * *"   # 18:17 MSK every day
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Render only, do not upload"
+        type: boolean
+        default: false
+      count:
+        description: "How many Shorts to publish"
+        default: "1"
+
+permissions:
+  contents: write
+
+concurrency: shorts
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+      - run: pip install -r shorts/requirements.txt
+      - name: Render and upload
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: |
+          cd shorts
+          python publish_next.py --count "${{ inputs.count || 1 }}" ${{ inputs.dry_run && '--dry-run' || '' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shorts-${{ github.run_number }}
+          path: shorts/out/*.mp4
+          retention-days: 7
+      - name: Save publish log
+        if: ${{ !inputs.dry_run }}
+        run: |
+          git config user.name "shorts-bot"
+          git config user.email "shorts-bot@users.noreply.github.com"
+          git add shorts/content/published.json
+          git diff --cached --quiet || (git commit -m "Publish Short $(date -u +%F)" && git push)
